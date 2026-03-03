@@ -1,0 +1,37 @@
+name: next-build.yaml
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - name: Log in to ghcr.io
+        uses: axel7083/podman-desktop-extension-publisher-action@055efb077257470fbce19277c013466ff6b22195 #v0.1
+        with:
+          tags: |
+            next
+            ${{ github.sha }}
+          registry: ghcr.io
+          registry-password: ${{ secrets.GITHUB_TOKEN }}
+
