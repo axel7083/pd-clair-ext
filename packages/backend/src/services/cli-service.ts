@@ -85,9 +85,21 @@ export abstract class CliService<D extends BaseCliDependencies> implements Dispo
     // default parse: '<tool> <semver>' from '--version'
     const { stdout } = await this.dependencies.process.exec(this.binaryPath, ['--version']);
     // example: 'syft 1.41.2' or 'grype 0.109.0'
+    // or: 'clair-action version v0.0.99999 (claircore v1.5.48)'
     const text = stdout.trim();
-    const [, version] = text.split(/\s+/);
-    return version ?? text;
+
+    // try to match 'version vX.Y.Z'
+    const versionMatch = /version\s+v?(\d+\.\d+\.\d+(?:-\w+)?)/i.exec(text);
+    if (versionMatch?.[1]) {
+      return versionMatch[1];
+    }
+
+    const parts = text.split(/\s+/);
+    const version = parts.find(p => /^v?\d+\.\d+\.\d+/.test(p));
+    if (version) {
+      return version.startsWith('v') ? version.slice(1) : version;
+    }
+    return parts[1] ?? text;
   }
 
   async init(): Promise<void> {
@@ -245,7 +257,7 @@ export abstract class CliService<D extends BaseCliDependencies> implements Dispo
     return binaryPath;
   }
 
-  protected getAssetName(version: string): string {
+  protected getAssetName(_version: string): string {
     let os: string;
     let extension = 'tar.gz';
 
@@ -284,6 +296,6 @@ export abstract class CliService<D extends BaseCliDependencies> implements Dispo
         break;
     }
 
-    return `${this.binaryBaseName}_${version}_${os}_${architecture}.${extension}`;
+    return `${this.binaryBaseName}-${os}-${architecture}.${extension}`;
   }
 }
