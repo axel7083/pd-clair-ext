@@ -40,6 +40,7 @@ import { ContainerService } from './containers-service';
 import { PodmanService } from './podman-service';
 import { ClairService } from './clair-service';
 import { Octokit } from '@octokit/rest';
+import { ImageCheckerProvider } from './image-checker-provider';
 
 interface Dependencies {
   extensionContext: ExtensionContext;
@@ -110,5 +111,14 @@ export class MainService implements Disposable, AsyncInit {
     });
     await clair.init();
     this.#disposables.push(clair);
+
+    // image checker
+    const imageChecker = new ImageCheckerProvider({
+      imageChecker: this.dependencies.imageChecker,
+      clair: clair,
+      containers: containers,
+    });
+    await imageChecker.init();
+    this.#disposables.push(imageChecker);
   }
 }

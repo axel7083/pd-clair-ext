@@ -19,7 +19,14 @@
     "format:fix": "prettier --write \"src/**/*.ts\"",
     "watch": "vite --mode development build -w"
   },
-  "contributes": {},
+  "contributes": {
+    "commands": [
+      {
+        "command": "clair.update",
+        "title": "Clair: update the database"
+      }
+    ]
+  },
   "devDependencies": {
     "@podman-desktop/podman-extension-api": "^1.25.1",
     "@podman-desktop/api": "^1.25.1",

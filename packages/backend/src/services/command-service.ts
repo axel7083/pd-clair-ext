@@ -15,26 +15,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  ***********************************************************************/
-import type { commands as commandsApi, Disposable, ProviderContainerConnection } from '@podman-desktop/api';
-import type { RoutingService } from './routing-service';
+import type { commands as commandsApi, Disposable } from '@podman-desktop/api';
 import type { AsyncInit } from '../utils/async-init';
-import { z } from 'zod';
 import type { ContainerService } from './containers-service';
 import type { ProviderService } from './provider-service';
+import type { ClairService } from './clair-service';
 
 interface Dependencies {
   commandsApi: typeof commandsApi;
-  routing: RoutingService;
   containers: ContainerService;
   providers: ProviderService;
+  clair: ClairService;
 }
-
-const ImageInfoUISchema = z.object({
-  id: z.string(),
-  engineId: z.string(),
-  arch: z.string(),
-  isManifest: z.boolean(),
-});
 
 export class CommandService implements Disposable, AsyncInit {
   #disposables: Disposable[] = [];
@@ -47,25 +39,10 @@ export class CommandService implements Disposable, AsyncInit {
 
   async init(): Promise<void> {
     this.#disposables.push(
-      this.dependencies.commandsApi.registerCommand('syft.analysis', this.syftAnalysis.bind(this)),
+      this.dependencies.commandsApi.registerCommand(
+        'clair.update',
+        this.dependencies.clair.update.bind(this.dependencies.clair),
+      ),
     );
-  }
-
-  protected async syftAnalysis(args: unknown): Promise<void> {
-    const result = ImageInfoUISchema.safeParse(args);
-    if (!result.success) {
-      console.error('[syftAnalysis]', args, result.error);
-      throw result.error;
-    }
-
-    const { engineId, id } = result.data;
-
-    // 1. Get the {@link ProviderContainerConnection} by engine id
-    const provider: ProviderContainerConnection =
-      await this.dependencies.containers.getRunningProviderContainerConnectionByEngineId(engineId);
-    // 2. Transform the ProviderContainerConnection in ProviderContainerConnectionDetailedInfo
-    const providerIdentifier = this.dependencies.providers.toProviderContainerConnectionDetailedInfo(provider);
-    // 3. Redirect to the image analysis page
-    return this.dependencies.routing.openImageAnalysisPage(providerIdentifier, id);
   }
 }
