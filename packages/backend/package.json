@@ -30,7 +30,7 @@
   "devDependencies": {
     "@podman-desktop/podman-extension-api": "^1.25.1",
     "@podman-desktop/api": "^1.25.1",
-    "@types/node": "^24",
+    "@types/node": "^25",
     "@types/adm-zip": "^0.5.7",
     "@types/tar": "^6.1.13",
     "vite": "^7.3.1",
